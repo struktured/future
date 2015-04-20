@@ -1,7 +1,6 @@
 (** Signature defining a small subset of Async's API. Async, Lwt, and
     Stdlib (blocking) implementations of this interface are provided.
 *)
-open Core.Std
 
 module type S = sig
 

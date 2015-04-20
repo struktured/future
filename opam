@@ -8,7 +8,8 @@ bug-reports: "https://github.com/agarwal/future/issues"
 
 build: [
   "omake" "-j%{jobs}%"
-    "COMPILE_LIB_STD=true"
+    "COMPILE_LIB_STD=%{core+cfstream:installed}%"
+    "COMPILE_LIB_CONTAINERS=%{containers+gen:installed}%"
     "COMPILE_LIB_LWT=%{lwt:installed}%"
     "COMPILE_LIB_ASYNC=%{async:installed}%"
 ]
@@ -24,11 +25,13 @@ remove: [
 depends: [
   "ocamlfind" {build}
   "omake" {build}
-  "core" {>= "111.17.00"}
-  "cfstream"
 ]
 
 depopts: [
   "lwt"
   "async"
+  "core"
+  "containers"
+  "cfstream"
+  "gen"
 ]

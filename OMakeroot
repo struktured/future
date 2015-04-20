@@ -1,7 +1,7 @@
 open build/OCaml
 DefineCommandVars()
 
-.PHONY: lib lib_std lib_lwt lib_async \
+.PHONY: lib lib_std lib_containers lib_lwt lib_async \
         install uninstall \
         clean distclean \
         print_config
@@ -16,19 +16,23 @@ distclean: clean
 # General Project Information
 PROJECT = future
 VERSION = 0.1-dev
-DESCRIPTION = Abstraction over Stdlib, Lwt, and Async.
+DESCRIPTION = Abstraction over Stdlib, Containers+Gen, Lwt, and Async.
 
 LIB_NAME = $(PROJECT)
-LIB_MODULES[] = future
-LIB_PACKAGES = core
+LIB_MODULES[] = monad result error or_error future
+LIB_PACKAGES =
 
 LIB_STD_NAME = $(PROJECT)_std
 LIB_STD_MODULES[] = future_std
 LIB_STD_PACKAGES = $(LIB_PACKAGES) cfstream
 
+LIB_CONTAINERS_NAME = $(PROJECT)_containers
+LIB_CONTAINERS_MODULES[] = future_containers
+LIB_CONTAINERS_PACKAGES = $(LIB_PACKAGES) gen containers
+
 LIB_LWT_NAME = $(PROJECT)_lwt
 LIB_LWT_MODULES[] = future_lwt
-LIB_LWT_PACKAGES = $(LIB_PACKAGES) lwt lwt.preemptive lwt.syntax
+LIB_LWT_PACKAGES = $(LIB_PACKAGES) lwt lwt.preemptive lwt.ppx
 
 LIB_ASYNC_NAME = $(PROJECT)_async
 LIB_ASYNC_MODULES[] = future_async
@@ -44,6 +48,7 @@ $(CONFIG_FILE):
   if $(not $(file-exists $(CONFIG_FILE)))
     echo "Generating default $(CONFIG_FILE). Change as desired."
     echo "COMPILE_LIB_STD = true" > $(CONFIG_FILE)
+    echo "COMPILE_LIB_CONTAINERS = true" >> $(CONFIG_FILE)
     echo "COMPILE_LIB_LWT = true" >> $(CONFIG_FILE)
     echo "COMPILE_LIB_ASYNC = true" >> $(CONFIG_FILE)
     echo "PREFIX = $(DEFAULT_PREFIX)" >> $(CONFIG_FILE)
@@ -68,6 +73,10 @@ if $(not $(defined COMPILE_LIB_STD))
   COMPILE_LIB_STD = true
   export
 
+if $(not $(defined COMPILE_LIB_CONTAINERS))
+  COMPILE_LIB_CONTAINERS = true
+  export
+
 if $(not $(defined COMPILE_LIB_LWT))
   COMPILE_LIB_LWT = true
   export
@@ -78,6 +87,7 @@ if $(not $(defined COMPILE_LIB_ASYNC))
 
 print_config:
   echo "COMPILE_LIB_STD: $(COMPILE_LIB_STD)"
+  echo "COMPILE_LIB_CONTAINERS: $(COMPILE_LIB_CONTAINERS)"
   echo "COMPILE_LIB_LWT: $(COMPILE_LIB_LWT)"
   echo "COMPILE_LIB_ASYNC: $(COMPILE_LIB_ASYNC)"
   echo "PREFIX: $(PREFIX)"
@@ -109,10 +119,12 @@ OCAMLFINDFLAGS =
 .SUBDIRS: .
   mkdir -p _build/main
   mkdir -p _build/std
+  mkdir -p _build/containers
   mkdir -p _build/lwt
   mkdir -p _build/async
   vmount(-l, src/, _build/main)
   vmount(-l, src/, _build/std)
+  vmount(-l, src/, _build/containers)
   vmount(-l, src/, _build/lwt)
   vmount(-l, src/, _build/async)
 
@@ -134,10 +146,20 @@ OCAMLFINDFLAGS =
       .DEFAULT: lib_std
 
   ##############################################################################
+  # Containers Library
+  .SUBDIRS: _build/containers
+    OCAMLPACKS[] = $(LIB_CONTAINERS_PACKAGES)
+    OCAML_LIBS = ../main/future
+    lib_containers: $(OCamlLibrary $(LIB_CONTAINERS_NAME), $(LIB_CONTAINERS_MODULES))
+    if $(COMPILE_LIB_CONTAINERS)
+      echo "compiling $(LIB_CONTAINERS_NAME) library"
+      .DEFAULT: lib_containers
+
+  ##############################################################################
   # Lwt Library
   .SUBDIRS: _build/lwt
     OCAMLPACKS[] = $(LIB_LWT_PACKAGES)
-    OCAMLFINDFLAGS = -syntax camlp4o
+    OCAMLFINDFLAGS =
     OCAML_LIBS = ../main/future
     lib_lwt: $(OCamlLibrary $(LIB_LWT_NAME), $(LIB_LWT_MODULES))
     if $(COMPILE_LIB_LWT)
@@ -175,6 +197,15 @@ _build/META:
   echo "  exists_if = \"$(LIB_STD_NAME).cma\"" >> $@
   echo ")" >> $@
   echo "" >> $@
+  echo "package \"containers\" (" >> $@
+  echo "  description = \"$(DESCRIPTION)\"" >> $@
+  echo "  version = \"$(VERSION)\"" >> $@
+  echo "  requires = \"$(LIB_CONTAINERS_PACKAGES)\"" >> $@
+  echo "  archive(byte) = \"$(LIB_CONTAINERS_NAME).cma\"" >> $@
+  echo "  archive(native) = \"$(LIB_CONTAINERS_NAME).cmxa\"" >> $@
+  echo "  exists_if = \"$(LIB_CONTAINERS_NAME).cma\"" >> $@
+  echo ")" >> $@
+  echo "" >> $@
   echo "package \"lwt\" (" >> $@
   echo "  description = \"$(DESCRIPTION)\"" >> $@
   echo "  version = \"$(VERSION)\"" >> $@
@@ -202,9 +233,9 @@ install: _build/META uninstall
     src/future.ml \
     src/future_*.ml[i] \
     -optional \
-      _build/{std,lwt,async}/future_*.a \
-      _build/{std,lwt,async}/future_*.cm[aix] \
-      _build/{std,lwt,async}/future_*.cmx[as]
+      _build/{std,containers,lwt,async}/future_*.a \
+      _build/{std,containers,lwt,async}/future_*.cm[aix] \
+      _build/{std,containers,lwt,async}/future_*.cmx[as]
 
 uninstall:
   ocamlfind remove $(PROJECT)
