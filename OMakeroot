@@ -19,8 +19,8 @@ VERSION = 0.1-dev
 DESCRIPTION = Abstraction over Stdlib, Containers+Gen, Lwt, and Async.
 
 LIB_NAME = $(PROJECT)
-LIB_MODULES[] = monad result error or_error future
-LIB_PACKAGES =
+LIB_MODULES[] = monad future
+LIB_PACKAGES = rresult
 
 LIB_STD_NAME = $(PROJECT)_std
 LIB_STD_MODULES[] = future_std
@@ -160,7 +160,7 @@ OCAMLFINDFLAGS =
   .SUBDIRS: _build/lwt
     OCAMLPACKS[] = $(LIB_LWT_PACKAGES)
     OCAMLFINDFLAGS =
-    OCAML_LIBS = ../main/future
+    OCAML_LIBS =  ../main/future
     lib_lwt: $(OCamlLibrary $(LIB_LWT_NAME), $(LIB_LWT_MODULES))
     if $(COMPILE_LIB_LWT)
       echo "compiling $(LIB_LWT_NAME) library"
@@ -227,9 +227,13 @@ _build/META:
 install: _build/META uninstall
   ocamlfind install $(PROJECT) \
     _build/META \
+    _build/main/or_error.a \
+    _build/main/or_error.cm[aix] \
+    _build/main/or_error.cmx[as] \
     _build/main/future.a \
     _build/main/future.cm[aix] \
     _build/main/future.cmx[as] \
+    src/or_error.ml \
     src/future.ml \
     src/future_*.ml[i] \
     -optional \

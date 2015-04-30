@@ -1,0 +1,3 @@
+PKG core async lwt cfstream gen containers lwt.ppx core_kernel rresult
+S ./src
+B _build/**

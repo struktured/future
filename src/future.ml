@@ -24,20 +24,30 @@ module type S = sig
       val filter : ?how:how -> 'a list -> f:('a -> bool t) -> 'a list t
     end
 
+    module Or_error : 
+      sig
+        type t 
+    end
+
+    module Error : 
+      sig
+        type t
+    end
+
     module Or_error : sig
       module List : sig
 
         val map
           :  ?how:Deferred_intf.how
           -> 'a list
-          -> f:('a -> 'b Or_error.t t)
-          -> 'b list Or_error.t t
+          -> f:('a -> ('b,'c) Rresult.result t)
+          -> ('b list,'c list) Rresult.result t
 
         val iter
           :  ?how:Deferred_intf.how
           -> 'a list
-          -> f:('a -> unit Or_error.t t)
-          -> unit Or_error.t t
+          -> f:('a -> (unit, 'c) Rresult.result t)
+          -> (unit, 'c) Rresult.result t
 
       end
     end
@@ -154,6 +164,12 @@ module type S = sig
   module Sys : sig
     val getenv : string -> string option
     val file_exists : string -> [ `No | `Unknown | `Yes ] Deferred.t
+  end
+
+  module Pid : sig
+    type t
+    val of_int : int -> t
+    val to_int : t -> int
   end
 
   module Unix : sig
