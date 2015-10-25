@@ -1,7 +1,7 @@
 open Core.Std
 open Async.Std
 
-type how = Monad_sequence.how
+type how = Async_kernel.Deferred_intf.how
 
 module Deferred = Deferred
 

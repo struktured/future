@@ -1,7 +1,7 @@
 open Core.Std
 open Lwt
 
-type how = [ `Parallel | `Sequential | `Max_concurrent_jobs of int ]
+type how = [ `Parallel | `Sequential ]
 
 module Deferred = struct
   type 'a t = 'a Lwt.t

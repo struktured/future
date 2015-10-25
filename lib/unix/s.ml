@@ -5,7 +5,7 @@ open Core.Std
 
 module type S = sig
 
-  type how = [ `Parallel | `Sequential | `Max_concurrent_jobs of int ]
+  type how = [ `Parallel | `Sequential ]
   (** [`Max_concurrent_jobs] supported only for Async
   implementation. The Lwt implementation treats this the same as
   [`Parallel]. Blocking implementation treats all as [`Sequential]. *)
